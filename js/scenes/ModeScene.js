@@ -163,17 +163,84 @@ export class ModeScene extends BaseScene {
   }
 
   /**
-   * 绘制背景
+   * 绘制背景 - 柔和斜线渐变
    */
   _drawBackground() {
-    // 渐变背景
-    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
-    gradient.addColorStop(0, '#F8FAFC');
-    gradient.addColorStop(0.5, '#FFFFFF');
-    gradient.addColorStop(1, '#F0F4F8');
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
     
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    // 1. 主背景 - 柔和的斜向渐变（从右上到左下，与开始界面对角方向相反）
+    const mainGradient = ctx.createLinearGradient(w, 0, 0, h);
+    mainGradient.addColorStop(0, '#E0F7F5');    // 柔和的薄荷绿
+    mainGradient.addColorStop(0.35, '#F0FCFA'); // 浅绿白
+    mainGradient.addColorStop(0.65, '#F5FAFF'); // 浅蓝白
+    mainGradient.addColorStop(1, '#E8F4FD');    // 柔和的天蓝
+    
+    ctx.fillStyle = mainGradient;
+    ctx.fillRect(0, 0, w, h);
+    
+    // 2. 装饰性斜线条纹 - 细腻的线条
+    ctx.save();
+    ctx.globalAlpha = 0.035;
+    ctx.strokeStyle = '#5AB9A8';
+    ctx.lineWidth = 1;
+    
+    const lineSpacing = 55;
+    const diagonalOffset = Math.max(w, h);
+    
+    // 从右上到左下的斜线
+    ctx.beginPath();
+    for (let i = -diagonalOffset; i < w + h + diagonalOffset; i += lineSpacing) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + h, h);
+    }
+    ctx.stroke();
+    
+    // 3. 第二层斜线（交叉方向，更稀疏）
+    ctx.globalAlpha = 0.02;
+    ctx.strokeStyle = '#4A90D9';
+    ctx.lineWidth = 1.5;
+    
+    ctx.beginPath();
+    for (let i = -diagonalOffset; i < w + h + diagonalOffset; i += lineSpacing * 2.5) {
+      ctx.moveTo(i, h);
+      ctx.lineTo(i - h, 0);
+    }
+    ctx.stroke();
+    ctx.restore();
+    
+    // 4. 顶部和底部的柔和光晕
+    const topGlow = ctx.createLinearGradient(0, 0, 0, h * 0.35);
+    topGlow.addColorStop(0, 'rgba(90, 185, 168, 0.12)');
+    topGlow.addColorStop(1, 'rgba(90, 185, 168, 0)');
+    ctx.fillStyle = topGlow;
+    ctx.fillRect(0, 0, w, h * 0.35);
+    
+    const bottomGlow = ctx.createLinearGradient(0, h * 0.65, 0, h);
+    bottomGlow.addColorStop(0, 'rgba(74, 144, 217, 0)');
+    bottomGlow.addColorStop(1, 'rgba(74, 144, 217, 0.1)');
+    ctx.fillStyle = bottomGlow;
+    ctx.fillRect(0, h * 0.65, w, h * 0.35);
+    
+    // 5. 角落装饰光点
+    this._drawCornerGlow(w * 0.12, h * 0.18, 110, 'rgba(90, 185, 168, 0.1)');
+    this._drawCornerGlow(w * 0.88, h * 0.82, 90, 'rgba(74, 144, 217, 0.1)');
+  }
+  
+  /**
+   * 绘制角落光晕装饰
+   */
+  _drawCornerGlow(x, y, radius, color) {
+    const ctx = this.ctx;
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   /**

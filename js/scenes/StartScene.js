@@ -129,17 +129,84 @@ export class StartScene extends BaseScene {
   }
 
   /**
-   * 绘制背景
+   * 绘制背景 - 柔和斜线渐变
    */
   _drawBackground() {
-    // 渐变背景
-    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
-    gradient.addColorStop(0, '#F8FAFC');
-    gradient.addColorStop(0.5, '#FFFFFF');
-    gradient.addColorStop(1, '#F0F4F8');
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
     
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    // 1. 主背景 - 柔和的斜向渐变（从左上到右下）
+    const mainGradient = ctx.createLinearGradient(0, 0, w, h);
+    mainGradient.addColorStop(0, '#E8F4FD');    // 柔和的浅蓝
+    mainGradient.addColorStop(0.3, '#F0F7FF');  // 更浅的蓝白
+    mainGradient.addColorStop(0.7, '#F8F5FF');  // 淡淡的紫白
+    mainGradient.addColorStop(1, '#F0F0FF');    // 柔和的淡紫
+    
+    ctx.fillStyle = mainGradient;
+    ctx.fillRect(0, 0, w, h);
+    
+    // 2. 装饰性斜线条纹 - 非常细腻的线条
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = '#4A90D9';
+    ctx.lineWidth = 1;
+    
+    const lineSpacing = 60;
+    const diagonalOffset = Math.max(w, h);
+    
+    // 从左上到右下的斜线
+    ctx.beginPath();
+    for (let i = -diagonalOffset; i < w + h + diagonalOffset; i += lineSpacing) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i - h, h);
+    }
+    ctx.stroke();
+    
+    // 3. 第二层斜线（更稀疏，颜色稍深）
+    ctx.globalAlpha = 0.025;
+    ctx.strokeStyle = '#8B7FD9';
+    ctx.lineWidth = 2;
+    
+    ctx.beginPath();
+    for (let i = -diagonalOffset; i < w + h + diagonalOffset; i += lineSpacing * 3) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i - h, h);
+    }
+    ctx.stroke();
+    ctx.restore();
+    
+    // 4. 顶部和底部的柔和光晕效果
+    const topGlow = ctx.createLinearGradient(0, 0, 0, h * 0.4);
+    topGlow.addColorStop(0, 'rgba(135, 206, 250, 0.15)');
+    topGlow.addColorStop(1, 'rgba(135, 206, 250, 0)');
+    ctx.fillStyle = topGlow;
+    ctx.fillRect(0, 0, w, h * 0.4);
+    
+    const bottomGlow = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    bottomGlow.addColorStop(0, 'rgba(200, 180, 255, 0)');
+    bottomGlow.addColorStop(1, 'rgba(200, 180, 255, 0.12)');
+    ctx.fillStyle = bottomGlow;
+    ctx.fillRect(0, h * 0.6, w, h * 0.4);
+    
+    // 5. 角落装饰 - 柔和的光点
+    this._drawCornerGlow(w * 0.15, h * 0.2, 120, 'rgba(74, 144, 217, 0.08)');
+    this._drawCornerGlow(w * 0.85, h * 0.8, 100, 'rgba(139, 127, 217, 0.08)');
+  }
+  
+  /**
+   * 绘制角落光晕装饰
+   */
+  _drawCornerGlow(x, y, radius, color) {
+    const ctx = this.ctx;
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   /**
