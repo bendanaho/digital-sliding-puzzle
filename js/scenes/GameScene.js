@@ -320,17 +320,97 @@ export class GameScene extends BaseScene {
   }
 
   /**
-   * 绘制背景
+   * 绘制背景 - 明亮柔和的同心圆背景
    */
   _drawBackground() {
-    // 渐变背景
-    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
-    gradient.addColorStop(0, '#F8FAFC');
-    gradient.addColorStop(0.5, '#FFFFFF');
-    gradient.addColorStop(1, '#F0F4F8');
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+    const centerX = w / 2;
+    const centerY = h / 2;
     
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    // 1. 底层背景 - 明亮的浅蓝白
+    ctx.fillStyle = '#F5F9FC';
+    ctx.fillRect(0, 0, w, h);
+    
+    // 2. 计算圆环参数
+    // 中心亮区（棋盘区域）- 较大以确保棋盘周围明亮
+    const centerRadius = 180;
+    // 向外扩展的圆环间距
+    const ringSpacing = 85;
+    const ringCount = 3;
+    
+    // 3. 颜色配置 - 更明亮的色调
+    const ringColors = [
+      { r: 200, g: 230, b: 255 },  // 中心：极浅的亮蓝
+      { r: 185, g: 235, b: 225 },  // 青绿
+      { r: 220, g: 215, b: 250 },  // 淡紫
+      { r: 195, g: 225, b: 240 }   // 天蓝
+    ];
+    
+    // 4. 绘制中心亮区（棋盘周围）- 使用明亮的颜色
+    const centerColor = ringColors[0];
+    const centerGradient = ctx.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, centerRadius
+    );
+    // 中心最亮，向外渐变
+    centerGradient.addColorStop(0, `rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, 0.90)`);
+    centerGradient.addColorStop(0.6, `rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, 0.75)`);
+    centerGradient.addColorStop(0.9, `rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, 0.50)`);
+    centerGradient.addColorStop(1, `rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, 0.25)`);
+    
+    ctx.fillStyle = centerGradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, centerRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 5. 绘制外层圆环（带柔和过渡）
+    for (let i = 0; i < ringCount; i++) {
+      const innerRadius = centerRadius + i * ringSpacing;
+      const outerRadius = innerRadius + ringSpacing;
+      const color = ringColors[(i + 1) % ringColors.length];
+      
+      // 创建柔和的径向渐变
+      const ringGradient = ctx.createRadialGradient(
+        centerX, centerY, innerRadius - 25,
+        centerX, centerY, outerRadius + 25
+      );
+      
+      // 内边缘柔和过渡
+      ringGradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+      ringGradient.addColorStop(0.12, `rgba(${color.r}, ${color.g}, ${color.b}, 0.20)`);
+      ringGradient.addColorStop(0.25, `rgba(${color.r}, ${color.g}, ${color.b}, 0.60)`);
+      
+      // 实体色区
+      ringGradient.addColorStop(0.4, `rgba(${color.r}, ${color.g}, ${color.b}, 0.70)`);
+      ringGradient.addColorStop(0.6, `rgba(${color.r}, ${color.g}, ${color.b}, 0.70)`);
+      
+      // 外边缘柔和过渡
+      ringGradient.addColorStop(0.75, `rgba(${color.r}, ${color.g}, ${color.b}, 0.60)`);
+      ringGradient.addColorStop(0.88, `rgba(${color.r}, ${color.g}, ${color.b}, 0.20)`);
+      ringGradient.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+      
+      ctx.fillStyle = ringGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius + 25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 6. 最外层柔和淡入背景
+    const outerFadeRadius = centerRadius + ringCount * ringSpacing + 30;
+    const fadeGradient = ctx.createRadialGradient(
+      centerX, centerY, outerFadeRadius - 50,
+      centerX, centerY, outerFadeRadius + 50
+    );
+    fadeGradient.addColorStop(0, 'rgba(195, 225, 240, 0.35)');
+    fadeGradient.addColorStop(0.5, 'rgba(210, 235, 245, 0.15)');
+    fadeGradient.addColorStop(1, 'rgba(245, 249, 252, 0)');
+    
+    ctx.fillStyle = fadeGradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerFadeRadius + 50, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   /**
