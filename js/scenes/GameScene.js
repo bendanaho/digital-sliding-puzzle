@@ -246,18 +246,21 @@ export class GameScene extends BaseScene {
     this.isGameOver = true;
     this.timer.stop();
     
-    // 播放胜利音效
-    audioManager.play(SoundType.WIN);
-    
-    // 更新弹窗内容
+    // 计算获得的星级
+    const starCount = this._calculateStars();
     const timeStr = this.timer.getFormattedTime();
     const moves = this.board.getMoveCount();
-    this.winDialog.content = `用时: ${timeStr}\n步数: ${moves}`;
     
-    // 延迟显示弹窗
+    // 延迟跳转到胜利界面
     setTimeout(() => {
-      this.winDialog.show();
-    }, 300);
+      globalEvent.emit('game:victory', {
+        boardSize: this.boardSize,
+        stars: starCount,
+        time: timeStr,
+        timeSeconds: Math.floor(this.timer.getTime() / 1000),
+        moves: moves
+      });
+    }, 400);
   }
 
   /**
@@ -418,6 +421,7 @@ export class GameScene extends BaseScene {
    */
   _drawContent() {
     this._drawGameInfo();
+    this._drawCrowns();
     
     // 绘制棋盘（如果有的话）
     if (this.board) {
@@ -469,6 +473,134 @@ export class GameScene extends BaseScene {
     this.ctx.fillText(`步数: ${moves}`, this.width - 30, infoY);
     
     this.ctx.restore();
+  }
+  
+  /**
+   * 绘制皇冠评分（在棋盘上方）
+   */
+  _drawCrowns() {
+    if (!this.board) return;
+    
+    const starCount = this._calculateStars();
+    // 更大的皇冠，更靠上的位置
+    const crownY = this.boardY - 70;
+    const crownSize = 48;
+    const crownSpacing = 56;
+    const totalWidth = crownSpacing * 2 + crownSize;
+    const startX = (this.width - totalWidth) / 2;
+    
+    this.ctx.save();
+    this.ctx.globalAlpha = this.uiOpacity * this.opacity;
+    
+    for (let i = 0; i < 3; i++) {
+      const x = startX + i * crownSpacing;
+      const isActive = i < starCount;
+      this._drawCrown(x, crownY, crownSize, isActive);
+    }
+    
+    this.ctx.restore();
+  }
+  
+  /**
+   * 绘制单个皇冠
+   */
+  _drawCrown(x, y, size, isActive) {
+    const ctx = this.ctx;
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+    const scale = size / 40;
+    
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.scale(scale, scale);
+    
+    if (isActive) {
+      // 亮黄色皇冠
+      ctx.fillStyle = '#FFD700';
+      ctx.strokeStyle = '#FFA500';
+      ctx.lineWidth = 2;
+      
+      // 皇冠主体
+      ctx.beginPath();
+      ctx.moveTo(-18, 5);
+      ctx.lineTo(-12, -15);
+      ctx.lineTo(-6, -5);
+      ctx.lineTo(0, -18);
+      ctx.lineTo(6, -5);
+      ctx.lineTo(12, -15);
+      ctx.lineTo(18, 5);
+      ctx.quadraticCurveTo(18, 12, 12, 12);
+      ctx.lineTo(-12, 12);
+      ctx.quadraticCurveTo(-18, 12, -18, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // 皇冠上的宝石
+      ctx.fillStyle = '#FF6B6B';
+      ctx.beginPath();
+      ctx.arc(0, -18, 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 高光
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(-5, -2, 6, 3, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // 灰色未激活皇冠
+      ctx.fillStyle = '#C0C0C0';
+      ctx.strokeStyle = '#A0A0A0';
+      ctx.lineWidth = 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(-18, 5);
+      ctx.lineTo(-12, -15);
+      ctx.lineTo(-6, -5);
+      ctx.lineTo(0, -18);
+      ctx.lineTo(6, -5);
+      ctx.lineTo(12, -15);
+      ctx.lineTo(18, 5);
+      ctx.quadraticCurveTo(18, 12, 12, 12);
+      ctx.lineTo(-12, 12);
+      ctx.quadraticCurveTo(-18, 12, -18, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+  
+  /**
+   * 计算当前星级
+   */
+  _calculateStars() {
+    const elapsed = Math.floor(this.timer.getTime() / 1000);
+    
+    // 4x4 模式评分标准
+    const timeLimits4x4 = [
+      { stars: 3, maxTime: 60 },
+      { stars: 2, maxTime: 180 },
+      { stars: 1, maxTime: 300 }
+    ];
+    
+    // 5x5 模式评分标准
+    const timeLimits5x5 = [
+      { stars: 3, maxTime: 150 },
+      { stars: 2, maxTime: 360 },
+      { stars: 1, maxTime: 720 }
+    ];
+    
+    const limits = this.boardSize === 4 ? timeLimits4x4 : timeLimits5x5;
+    
+    for (const limit of limits) {
+      if (elapsed <= limit.maxTime) {
+        return limit.stars;
+      }
+    }
+    
+    return 0;
   }
 
   /**

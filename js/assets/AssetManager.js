@@ -29,8 +29,8 @@ export class AssetManager {
       // 音频资源占位
       audios: {
         'button_click': 'js/audio/click.mp3',
-        // 'block_move': 'js/audio/move.mp3',
-        // 'win': 'js/audio/win.mp3'
+        'block_move': 'js/audio/move.mp3',
+        'win': 'js/audio/win.mp3'
       }
     };
   }

@@ -9,6 +9,7 @@ import { globalEvent } from './js/utils/EventEmitter.js';
 import { StartScene } from './js/scenes/StartScene.js';
 import { ModeScene } from './js/scenes/ModeScene.js';
 import { GameScene } from './js/scenes/GameScene.js';
+import { VictoryScene } from './js/scenes/VictoryScene.js';
 
 // 游戏主类
 class Game {
@@ -126,7 +127,8 @@ class Game {
     this.scenes = {
       start: new StartScene(this.canvas, this.ctx),
       mode: new ModeScene(this.canvas, this.ctx),
-      game: new GameScene(this.canvas, this.ctx)
+      game: new GameScene(this.canvas, this.ctx),
+      victory: new VictoryScene(this.canvas, this.ctx)
     };
     
     // 初始化所有场景
@@ -149,6 +151,11 @@ class Game {
     // 游戏开始事件
     globalEvent.on('game:start', (boardSize) => {
       this.switchScene('game', boardSize);
+    });
+    
+    // 游戏胜利事件
+    globalEvent.on('game:victory', (data) => {
+      this.switchScene('victory', data);
     });
     
     // 监听屏幕旋转/尺寸变化
@@ -225,8 +232,8 @@ class Game {
       this.currentScene.isLoading = true;
     }
     
-    // 进入场景
-    await this.currentScene.enter();
+    // 进入场景（传递参数）
+    await this.currentScene.enter(...args);
   }
 
   /**
